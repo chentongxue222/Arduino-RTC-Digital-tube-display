@@ -1,2 +1,3 @@
 # project2_RTCshishishizhongsiweishumaguanxianshi
-RTC实时时钟4位数码管显示（STCode）
+RTC实时时钟4位数码管显示（STCode
+＃公众号：STCode
