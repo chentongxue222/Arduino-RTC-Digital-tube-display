@@ -1,0 +1,69 @@
+#include <DS1302.h>   //DS1302头文件
+#include <Wire.h>     //Wire头文件
+#include "TM1637.h"   //数码管头文件
+#define CLK 10        //数码管CLK接口
+#define DIO 11        //数码管DIO接口
+TM1637 tm1637(CLK,DIO);  //创建一个对象
+DS1302 rtc(2, 3, 4); //RTC的RST,DAT,CLK
+int key=5;           //按键引脚5
+int flag1=0;         //标志位flag1初始值为0
+void setup() 
+{
+  tm1637.init();
+  tm1637.set(BRIGHT_TYPICAL);//BRIGHT_TYPICAL = 2,BRIGHT_DARKEST = 0,BRIGHTEST = 7;
+  Serial.begin(9600);   //设置串口波特率
+  pinMode(key,INPUT_PULLUP);  //设置按键引脚为上拉电阻模式
+  initRTCTime();           //初始化时钟
+}
+
+void loop()        //主函数
+ {
+    key_scan();     //按键扫描子函数
+    Time tim = rtc.time(); //获取时间数据
+    if(flag1==0)       //当标志位为0，显示时钟和分钟
+    {
+    tm1637.point(POINT_ON);   //显示冒号
+    tm1637.display(0,tim.hr/10);   //显示时钟
+    tm1637.display(1,tim.hr%10);
+    tm1637.display(2,tim.min/10);   //显示分钟
+    tm1637.display(3,tim.min%10);
+    }
+    else if(flag1==1)         //当标志位为1
+    {
+    tm1637.point(POINT_OFF);     //关闭冒号
+    tm1637.display(0,tim.yr/1000);   //显示年
+    tm1637.display(1,tim.yr/100%10);
+    tm1637.display(2,tim.yr%100/10);
+    tm1637.display(3,tim.yr%100%10);
+    }
+    else if(flag1==2)        //当标志位为2
+    {
+    tm1637.point(POINT_OFF);        //关闭冒号
+    tm1637.display(0,tim.mon/10);    //显示月
+    tm1637.display(1,tim.mon%10);
+    tm1637.display(2,tim.date/10);    //显示日期
+    tm1637.display(3,tim.date%10);
+    }
+}
+
+void key_scan()    //按键扫描子函数
+{
+  if(digitalRead(key)==LOW)   //假如按键按下
+  {
+    delay(20);            //延时20ms
+    if(digitalRead(key)==LOW)    //当按键确实按下
+    {
+    flag1++;               //标志位+1
+    if(flag1==3) flag1=0;  //当标志位为3，归0
+    while(digitalRead(key)==LOW){};
+    }
+  }
+}
+
+void initRTCTime(void)//初始化时钟子函数
+{
+  rtc.writeProtect(false);   //关闭写保护
+  rtc.halt(false);           //清除时钟停止标志
+  Time TIME(2020, 6, 20, 16, 58, 30, 7); //建立时间对象
+  rtc.time(TIME);//向DS1302设置时间数据
+}
